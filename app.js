@@ -1,36 +1,34 @@
 var express  = require('express');
 var app      = express();
 var aws      = require('aws-sdk');
-var queueUrl = "";
-var receipt  = "";
+
 
 // Load your AWS credentials and try to instantiate the object.
 aws.config.loadFromPath(__dirname + '/config.json');
 
 var dynamodb = new aws.DynamoDB({apiVersion: '2012-08-10'});
 
-
-
 app.get('/create', function (req, res) {
+
 
     var params = {
         AttributeDefinitions: [
             {
-                AttributeName: "Artist",
+                AttributeName: req.query.name,  // Partition key
                 AttributeType: "S"
             },
             {
-                AttributeName: "SongTitle",
+                AttributeName: req.query.task, // Sort key
                 AttributeType: "S"
             }
         ],
         KeySchema: [
             {
-                AttributeName: "Artist",
+                AttributeName: req.query.name,
                 KeyType: "HASH"
             },
             {
-                AttributeName: "SongTitle",
+                AttributeName: req.query.task,
                 KeyType: "RANGE"
             }
         ],
@@ -38,49 +36,21 @@ app.get('/create', function (req, res) {
             ReadCapacityUnits: 5,
             WriteCapacityUnits: 5
         },
-        TableName: "Music"
+        TableName: req.query.tablename
     };
-    dynamodb.createTable(params, function(err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else     console.log(data);           // successful response
-        /*
-         data = {
-         TableDescription: {
-         AttributeDefinitions: [
-         {
-         AttributeName: "Artist",
-         AttributeType: "S"
-         },
-         {
-         AttributeName: "SongTitle",
-         AttributeType: "S"
-         }
-         ],
-         CreationDateTime: <Date Representation>,
-         ItemCount: 0,
-         KeySchema: [
-         {
-         AttributeName: "Artist",
-         KeyType: "HASH"
-         },
-         {
-         AttributeName: "SongTitle",
-         KeyType: "RANGE"
-         }
-         ],
-         ProvisionedThroughput: {
-         ReadCapacityUnits: 5,
-         WriteCapacityUnits: 5
-         },
-         TableName: "Music",
-         TableSizeBytes: 0,
-         TableStatus: "CREATING"
-         }
-         }
-         */
+    dynamodb.createTable(params, function (err, data) {
+        if (err) {
+            res.send(err);
+            console.log(err);
+        }
+
+
+        else{
+            res.send(data);
+            console.log(data);
+
+        }
     });
-
-
 });
 
 // Start server.
